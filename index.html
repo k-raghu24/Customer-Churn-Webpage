@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customer Churn Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand-mark">C<span>+</span></div>
+    <div class="brand-copy"><strong>ChurnIQ</strong><small>Customer intelligence</small></div>
+    <div class="side-label">WORKSPACE</div>
+    <a class="nav-item active" href="{{ url_for('index') }}"><span>▦</span> Overview</a>
+    <div class="side-note">
+      <div class="pulse"></div>
+      <div><strong>Model status</strong><small>Random Forest · ready</small></div>
+    </div>
+    <div class="sidebar-bottom">MACHINE LEARNING<br><b>Customer Retention Suite</b></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><div class="eyebrow">CUSTOMER ANALYTICS / OVERVIEW</div><h1>Churn prediction</h1></div>
+      <div class="top-right"><span class="status-dot"></span> Model connected <div class="avatar">ML</div></div>
+    </header>
+
+    <section class="welcome">
+      <div>
+        <div class="eyebrow light">PREDICT · UNDERSTAND · RETAIN</div>
+        <h2>Know your customers.<br><em>Keep the right ones.</em></h2>
+        <p>Enter customer and service details to estimate churn risk using your trained machine learning pipeline.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="hero-core">C<span>+</span></div><div class="mini-card card-a">◈ <b>Insights</b></div>
+        <div class="mini-card card-b">↗ <b>Retention</b></div><div class="mini-card card-c">◎ <b>Prediction</b></div>
+      </div>
+    </section>
+
+    <section class="metrics">
+      <article class="metric-card"><div class="metric-label">MODEL ACCURACY <span>↗</span></div>
+        <div class="metric-value">{% if metrics.accuracy is defined %}{{ (metrics.accuracy * 100)|round(1) }}%{% else %}—{% endif %}</div>
+        <div class="metric-foot">Held-out test set</div></article>
+      <article class="metric-card"><div class="metric-label">CHURN RECALL <span>◎</span></div>
+        <div class="metric-value">{% if metrics.recall_churn is defined %}{{ (metrics.recall_churn * 100)|round(1) }}%{% else %}—{% endif %}</div>
+        <div class="metric-foot">Churn cases detected</div></article>
+      <article class="metric-card"><div class="metric-label">FEATURES USED <span>⌘</span></div>
+        <div class="metric-value">{{ metrics.feature_count|default('—') }}</div>
+        <div class="metric-foot">Customer/service attributes</div></article>
+      <article class="metric-card"><div class="metric-label">MODEL <span>✳</span></div>
+        <div class="metric-value model-name">Random Forest</div>
+        <div class="metric-foot">Scikit-learn pipeline</div></article>
+    </section>
+
+    {% if error_message %}
+      <div class="alert error">{{ error_message }}</div>
+    {% endif %}
+
+    {% if result %}
+    <section class="result-panel {% if result.prediction == 1 %}risk-high{% else %}risk-low{% endif %}">
+      <div class="result-icon">{% if result.prediction == 1 %}↗{% else %}✓{% endif %}</div>
+      <div class="result-copy"><div class="eyebrow">PREDICTION RESULT</div><h2>{{ result.label }}</h2><p>{{ result.message }}</p></div>
+      <div class="result-score"><span>Predicted churn probability</span><strong>{{ result.probability }}%</strong><div class="progress"><i style="width: {{ result.probability }}%"></i></div><small>{{ result.risk }} estimated risk</small></div>
+    </section>
+    {% endif %}
+
+    <section class="section-heading">
+      <div><div class="eyebrow">PREDICTION WORKSPACE</div><h2>Customer profile</h2><p>Complete the fields below, then run the model.</p></div>
+      <div class="secure-tag">⌁ &nbsp; Inputs processed locally by this app</div>
+    </section>
+
+    <form method="post" action="{{ url_for('index') }}">
+      <section class="form-card">
+        <div class="form-section-title"><div class="section-icon">♙</div><div><h3>Customer information</h3><p>Basic account and household details</p></div></div>
+        <div class="form-grid">
+          {% for field in ["Senior Citizen", "Partner", "Dependents", "Tenure Months"] %}
+          <label class="field"><span>{{ field }}</span>
+            {% if field in options %}
+              <select name="{{ field }}" required>{% for opt in options[field] %}<option value="{{ opt }}" {% if defaults.get(field)==opt %}selected{% endif %}>{{ opt }}</option>{% endfor %}</select>
+            {% else %}
+              <input name="{{ field }}" type="number" min="0" max="72" step="1" value="{{ defaults.get(field, '') }}" required>
+            {% endif %}
+          </label>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="form-card">
+        <div class="form-section-title"><div class="section-icon">⌁</div><div><h3>Service subscriptions</h3><p>Services currently attached to the account</p></div></div>
+        <div class="form-grid">
+          {% for field in ["Phone Service", "Multiple Lines", "Internet Service", "Online Security", "Online Backup", "Device Protection", "Tech Support", "Streaming TV", "Streaming Movies"] %}
+          <label class="field"><span>{{ field }}</span><select name="{{ field }}" required>{% for opt in options[field] %}<option value="{{ opt }}" {% if defaults.get(field)==opt %}selected{% endif %}>{{ opt }}</option>{% endfor %}</select></label>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="form-card">
+        <div class="form-section-title"><div class="section-icon">$</div><div><h3>Billing & contract</h3><p>Payment preferences and account charges</p></div></div>
+        <div class="form-grid">
+          {% for field in ["Contract", "Paperless Billing", "Payment Method"] %}
+          <label class="field"><span>{{ field }}</span><select name="{{ field }}" required>{% for opt in options[field] %}<option value="{{ opt }}" {% if defaults.get(field)==opt %}selected{% endif %}>{{ opt }}</option>{% endfor %}</select></label>
+          {% endfor %}
+          <label class="field"><span>Monthly Charges ($)</span><input name="Monthly Charges" type="number" min="0" max="200" step="0.01" value="{{ defaults.get('Monthly Charges', '') }}" required></label>
+          <label class="field"><span>Total Charges ($)</span><input name="Total Charges" type="number" min="0" max="100000" step="0.01" value="{{ defaults.get('Total Charges', '') }}" required></label>
+        </div>
+      </section>
+      <div class="form-actions"><p>Prediction is an estimate, not a guarantee of future customer behavior.</p><button type="submit">Run churn prediction <span>→</span></button></div>
+    </form>
+
+    <footer>ChurnIQ · Customer Churn Prediction <span>Built with Flask + Scikit-learn</span></footer>
+  </main>
+</body>
+</html>
